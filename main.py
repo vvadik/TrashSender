@@ -1,11 +1,9 @@
 import socket
 import struct
+import random
 
 
-SOURCE: str = '213.159.195.33'
 MY_IP: str = '213.159.195.33'
-# MY_IP = '101.112.199.33'
-# MY_IP = '45.62.195.33'
 
 
 def get_ip(ip: int, count: int) -> [str]:
@@ -27,15 +25,18 @@ def get_ip(ip: int, count: int) -> [str]:
             continue
 
         ips.append(new_ip)
-        print(new_ip)
+        # print(new_ip)
     return ips
 
 
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    ips: list = get_ip(struct.unpack('I', socket.inet_aton(MY_IP))[0], 13)
+    ips: [str] = get_ip(struct.unpack('I', socket.inet_aton(MY_IP))[0], 13)
+    num = random.randint(0, len(ips))
+    faked_ip = ips[num]
+
     for ip in ips:
-        sock.sendto(b'hello', (ip, 49678))
+        sock.sendto(faked_ip.encode() + b' hello', (ip, 49678))
 
 
 if __name__ == '__main__':
