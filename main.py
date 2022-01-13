@@ -8,7 +8,7 @@ MY_IP: str = '213.159.195.33'
 # MY_IP = '45.62.195.33'
 
 
-def get_ip(ip: str, count: int) -> [str]:
+def get_ip(ip: int, count: int) -> [str]:
     ips = []
     print(ip)
     param = 4294967295
