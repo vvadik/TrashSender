@@ -103,4 +103,3 @@ if __name__ == '__main__':
         else:
             partner.ip = ip
             print(f"received message: {message}")
-            print(addr)
