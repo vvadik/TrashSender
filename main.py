@@ -17,15 +17,23 @@ class Profile:
         
         self.src_fake_ip = self.generate_fake_ip(src_ip)
 
-    def get_ip(self):
+    def get_ip(self) -> str:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
-        return s.getsockname()[0]
+        ip = s.getsockname()[0]
+        print(f'Autodetected source ip: {ip}')
+        print('If it is not correct, restart program and use flag --src_ip with required ip')
+        return ip
     
-    def generate_fake_ip(self, ip: str):
+    def generate_fake_ip(self, ip: str) -> str:
         ips: [str] = get_ip(struct.unpack('I', socket.inet_aton(str(ip)))[0], self)
         num = random.randint(0, len(ips)-1)
-        return ips[num]
+        fake_ip = ips[num]
+        while fake_ip == ip:
+            num = random.randint(0, len(ips)-1)
+            fake_ip = ips[num]
+        print(f"Your fake ip is {fake_ip}")
+        return fake_ip
         
 
 
@@ -35,10 +43,12 @@ def get_ip(ip: int, partner: Profile) -> [str]:
     for i in range(0, param, partner.frequency):
         raw_ip = (ip + i) % param
         new_ip = socket.inet_ntoa(struct.pack('I', raw_ip))
-        octets: list = list(map(int, new_ip.split(".")))
+        octets = list(map(int, new_ip.split(".")))
         if octets[0] == 10:
             continue
         if octets[0] == 127:
+            continue
+        if octets[0] == 0:
             continue
         if octets[0] == 172:
             if 16 <= int(octets[1]) <= 31:
@@ -74,14 +84,14 @@ if __name__ == '__main__':
     args = parse_args()
     partner = Profile(args.dst_ip, args.src_ip, args.count)
 
-    sock_rec = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock_rec.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock_rec.bind((UDP_IP, UDP_PORT))
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     t1 = threading.Thread(target=sender, args=(sock, partner), daemon=True)
     t1.start()
+
+    sock_rec = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock_rec.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock_rec.bind((UDP_IP, UDP_PORT))
 
     while True:
         data, addr = sock_rec.recvfrom(10000000)
@@ -92,5 +102,5 @@ if __name__ == '__main__':
             print('Unable to answer back')
         else:
             partner.ip = ip
-            print("received message: %s" % message)
+            print(f"received message: {message}")
             print(addr)
